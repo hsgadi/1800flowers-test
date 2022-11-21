@@ -1,6 +1,6 @@
-import { Spin } from "antd";
+import { Empty, Spin } from "antd";
 import axios from "axios";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { connect } from "react-redux";
 import Articles from "./Articles";
 import Search from "./Search";
@@ -9,16 +9,22 @@ const applyFilter = (searchTerm) => (article) =>
   article.title.toLowerCase().includes(searchTerm.toLowerCase());
 
 const App = ({ articles, searchTerm, onSearch, onUpdate }) => {
+  const [isLoading, setIsLoading] = useState(false);
+
   async function getUser() {
+    setIsLoading(true);
     try {
       const response = await axios.get(
         "http://jsonplaceholder.typicode.com/posts"
       );
       onUpdate(response.data);
+      setIsLoading(false);
     } catch (error) {
       console.error(error);
+      setIsLoading(false);
     }
   }
+
   const updateArticles = (data) => {
     articles.map((article) => (article.id === data.id ? data : article));
     onUpdate(articles);
@@ -33,13 +39,15 @@ const App = ({ articles, searchTerm, onSearch, onUpdate }) => {
       <h1 className="mb-5">1800Flowers Test</h1>
 
       <Search value={searchTerm} onSearch={onSearch} />
-      {articles ? (
+      {!articles && isLoading ? (
+        <Spin />
+      ) : articles && articles.length > 0 ? (
         <Articles
           onArticleUpdate={updateArticles}
           articles={articles.filter(applyFilter(searchTerm))}
         />
       ) : (
-        <Spin />
+        <Empty />
       )}
     </>
   );
